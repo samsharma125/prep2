@@ -12,22 +12,31 @@ import {
   User,
   Key,
   Loader2,
-  Sparkles
+  Sparkles,
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-// Utility for cleaner tailwind classes
+// Utility
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("account");
+  const [user, setUser] = useState<any>(null);
+
+  // Load real user data
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => setUser(data.user))
+      .catch(() => {});
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-200 selection:bg-blue-500/30">
-      
+
       {/* Background Ambience */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-blue-600/20 rounded-full blur-[128px]" />
@@ -35,7 +44,7 @@ export default function SettingsPage() {
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto p-6 lg:p-12 flex flex-col lg:flex-row gap-10">
-        
+
         {/* SIDEBAR */}
         <aside className="w-full lg:w-72 flex-shrink-0 space-y-8">
           <div className="px-2">
@@ -62,19 +71,27 @@ export default function SettingsPage() {
             />
           </nav>
 
-          {/* User Mini Profile */}
+          {/* MINI PROFILE CARD */}
           <div className="bg-white/5 border border-white/5 rounded-2xl p-4 flex items-center gap-3 backdrop-blur-sm mt-auto">
+
+            {/* Avatar */}
             <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 flex items-center justify-center text-white font-bold text-sm">
-              JD
+              {user ? user.name?.substring(0, 2).toUpperCase() : "??"}
             </div>
+
+            {/* User info */}
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">John Doe</p>
-              <p className="text-xs text-slate-400 truncate">john@example.com</p>
+              <p className="text-sm font-medium text-white truncate">
+                {user ? user.name : "Loading..."}
+              </p>
+              <p className="text-xs text-slate-400 truncate">
+                {user ? user.email : "Fetching email..."}
+              </p>
             </div>
           </div>
         </aside>
 
-        {/* MAIN CONTENT AREA */}
+        {/* MAIN CONTENT */}
         <main className="flex-1 min-w-0">
           <AnimatePresence mode="wait">
             <motion.div
@@ -96,7 +113,7 @@ export default function SettingsPage() {
 }
 
 /* ------------------------------------------
-   COMPONENTS
+   SIDEBAR ITEM
 ------------------------------------------- */
 
 function SidebarItem({ icon, label, active, onClick }: any) {
@@ -140,6 +157,10 @@ function AccountSection() {
     </div>
   );
 }
+
+/* ------------------------------------------
+   APPEARANCE SECTION
+------------------------------------------- */
 
 function AppearanceSection() {
   const [theme, setTheme] = useState("system");
@@ -188,34 +209,105 @@ function AppearanceSection() {
 }
 
 /* ------------------------------------------
-   FORM COMPONENTS
+   CHANGE PASSWORD SECTION
 ------------------------------------------- */
 
 function ChangePasswordCard() {
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const submit = async () => {
+    setError("");
+    setMsg("");
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setError("All fields are required");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError("New password and confirm password do not match");
+      return;
+    }
+
+    setLoading(true);
+
+    const res = await fetch("/api/auth/change-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        currentPassword,
+        newPassword,
+      }),
+    });
+
+    const data = await res.json();
+    setLoading(false);
+
+    if (!res.ok) {
+      setError(data.error || "Something went wrong");
+    } else {
+      setMsg("Password updated successfully!");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    }
+  };
+
   return (
     <div className="bg-slate-900/50 border border-white/10 rounded-3xl p-10">
       <h3 className="text-2xl font-bold">Change Password</h3>
-      <p className="text-slate-400 text-sm mb-6">
-        Update your login password.
-      </p>
+      <p className="text-slate-400 text-sm mb-6">Update your login password.</p>
 
       <div className="space-y-6 max-w-xl">
-        <InputGroup label="Current Password" type="password" icon={<Key size={18} />} />
-        <InputGroup label="New Password" type="password" icon={<Lock size={18} />} />
-        <InputGroup label="Confirm Password" type="password" icon={<Lock size={18} />} />
+        <InputGroup
+          label="Current Password"
+          type="password"
+          icon={<Key size={18} />}
+          value={currentPassword}
+          onChange={setCurrentPassword}
+        />
+
+        <InputGroup
+          label="New Password"
+          type="password"
+          icon={<Lock size={18} />}
+          value={newPassword}
+          onChange={setNewPassword}
+        />
+
+        <InputGroup
+          label="Confirm Password"
+          type="password"
+          icon={<Lock size={18} />}
+          value={confirmPassword}
+          onChange={setConfirmPassword}
+        />
       </div>
 
+      {error && <p className="text-red-400 mt-4">{error}</p>}
+      {msg && <p className="text-green-400 mt-4">{msg}</p>}
+
       <div className="flex justify-end mt-6">
-        <SaveButton label="Update Password" />
+        <SaveButton
+          label="Update Password"
+          onClick={submit}
+          isLoading={loading}
+        />
       </div>
     </div>
   );
 }
 
-function InputGroup({ label, icon, type, value, onChange, placeholder }: any) {
+function InputGroup({ label, icon, type, value, onChange }: any) {
   return (
     <div className="space-y-2">
       <label className="text-sm text-slate-300">{label}</label>
+
       <div className="relative">
         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
           {icon}
@@ -224,8 +316,7 @@ function InputGroup({ label, icon, type, value, onChange, placeholder }: any) {
         <input
           type={type}
           value={value}
-          onChange={(e) => onChange && onChange(e.target.value)}
-          placeholder={placeholder}
+          onChange={(e) => onChange(e.target.value)}
           className="w-full bg-[#0F1623] border border-white/10 rounded-xl py-3 pl-12 pr-4 text-slate-200"
         />
       </div>
@@ -237,8 +328,10 @@ function SaveButton({ onClick, isLoading, label }: any) {
   return (
     <button
       onClick={onClick}
-      className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 rounded-xl text-white font-medium shadow-lg"
+      disabled={isLoading}
+      className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 rounded-xl text-white font-medium shadow-lg flex items-center gap-2 disabled:opacity-50"
     >
+      {isLoading && <Loader2 className="animate-spin" size={18} />}
       {label}
     </button>
   );
