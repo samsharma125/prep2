@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Lock,
   Palette,
@@ -8,230 +9,237 @@ import {
   Moon,
   Sun,
   Monitor,
+  User,
+  Key,
+  Loader2,
+  Sparkles
 } from "lucide-react";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+// Utility for cleaner tailwind classes
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 export default function SettingsPage() {
-  const [section, setSection] = useState("account");
+  const [activeTab, setActiveTab] = useState("account");
 
   return (
-    <div className="min-h-screen bg-[#0d1b2a] p-6 md:p-10 flex gap-8 text-white">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-200 selection:bg-blue-500/30">
+      
+      {/* Background Ambience */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-blue-600/20 rounded-full blur-[128px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-indigo-600/10 rounded-full blur-[128px]" />
+      </div>
 
-      {/* SIDEBAR */}
-      <aside className="w-72 bg-white/5 backdrop-blur-xl rounded-3xl 
-      border border-white/10 p-6 shadow-[0_8px_30px_rgba(0,0,0,0.35)]">
-        <h2 className="text-2xl font-bold mb-6 text-blue-300">Settings</h2>
+      <div className="relative z-10 max-w-7xl mx-auto p-6 lg:p-12 flex flex-col lg:flex-row gap-10">
+        
+        {/* SIDEBAR */}
+        <aside className="w-full lg:w-72 flex-shrink-0 space-y-8">
+          <div className="px-2">
+            <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-2">
+              <Sparkles className="text-blue-500 fill-blue-500/20" size={24} />
+              Settings
+            </h1>
+            <p className="text-slate-400 text-sm mt-2">Manage your preferences</p>
+          </div>
 
-        <nav className="space-y-2">
-          <SidebarButton
-            icon={<Lock size={20} />}
-            label="Account Security"
-            active={section === "account"}
-            onClick={() => setSection("account")}
-          />
+          <nav className="space-y-2">
+            <SidebarItem
+              icon={<User size={18} />}
+              label="Account"
+              active={activeTab === "account"}
+              onClick={() => setActiveTab("account")}
+            />
 
-          <SidebarButton
-            icon={<Palette size={20} />}
-            label="Theme & Appearance"
-            active={section === "appearance"}
-            onClick={() => setSection("appearance")}
-          />
-        </nav>
-      </aside>
+            <SidebarItem
+              icon={<Palette size={18} />}
+              label="Appearance"
+              active={activeTab === "appearance"}
+              onClick={() => setActiveTab("appearance")}
+            />
+          </nav>
 
-      {/* CONTENT */}
-      <main className="flex-1">
-        {section === "account" && <AccountSecurity />}
-        {section === "appearance" && <AppearanceSettings />}
-      </main>
+          {/* User Mini Profile */}
+          <div className="bg-white/5 border border-white/5 rounded-2xl p-4 flex items-center gap-3 backdrop-blur-sm mt-auto">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 flex items-center justify-center text-white font-bold text-sm">
+              JD
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-white truncate">John Doe</p>
+              <p className="text-xs text-slate-400 truncate">john@example.com</p>
+            </div>
+          </div>
+        </aside>
+
+        {/* MAIN CONTENT AREA */}
+        <main className="flex-1 min-w-0">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 10, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.98 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-8"
+            >
+              {activeTab === "account" && <AccountSection />}
+              {activeTab === "appearance" && <AppearanceSection />}
+            </motion.div>
+          </AnimatePresence>
+        </main>
+      </div>
     </div>
   );
 }
 
-/* Sidebar Button */
-function SidebarButton({ icon, label, active, onClick }: any) {
+/* ------------------------------------------
+   COMPONENTS
+------------------------------------------- */
+
+function SidebarItem({ icon, label, active, onClick }: any) {
   return (
     <button
       onClick={onClick}
-      className={`
-        w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all
-        ${active
-          ? "bg-blue-600 text-white shadow-lg shadow-blue-900/40"
-          : "bg-white/5 border border-white/10 hover:bg-white/10"
-        }
-      `}
+      className={cn(
+        "w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-300 group relative overflow-hidden",
+        active
+          ? "bg-blue-600 text-white shadow-lg shadow-blue-500/25"
+          : "text-slate-400 hover:text-white hover:bg-white/5"
+      )}
     >
-      {icon}
-      <span className="font-medium">{label}</span>
+      <span className="relative z-10 flex items-center gap-3">
+        {icon}
+        <span className="font-medium">{label}</span>
+      </span>
+
+      {active && (
+        <motion.div
+          layoutId="sidebar-glow"
+          className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 z-0"
+        />
+      )}
+
       <ChevronRight
-        size={18}
-        className={`ml-auto ${
-          active ? "translate-x-1 opacity-90" : "opacity-40"
-        }`}
+        size={16}
+        className={cn(
+          "ml-auto transition-transform relative z-10",
+          active ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
+        )}
       />
     </button>
   );
 }
 
-/* ACCOUNT SECURITY */
-function AccountSecurity() {
-  const [oldPass, setOldPass] = useState("");
-  const [newPass, setNewPass] = useState("");
-  const [confirmPass, setConfirmPass] = useState("");
-
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-
-  async function updatePassword() {
-    setError("");
-    setSuccess("");
-
-    if (newPass !== confirmPass) {
-      setError("New passwords do not match!");
-      return;
-    }
-
-    const res = await fetch("/api/auth/change-password", {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ oldPass, newPass }),
-    });
-
-    const data = await res.json();
-    if (!res.ok) return setError(data.error);
-
-    setSuccess("Password updated successfully!");
-  }
-
+function AccountSection() {
   return (
-    <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-10 rounded-3xl shadow-xl">
-      <h3 className="text-3xl font-semibold text-blue-300 mb-8">
-        Account Security
-      </h3>
-
-      <div className="space-y-6">
-        <Input label="Current Password" type="password" value={oldPass} onChange={setOldPass} />
-        <Input label="New Password" type="password" value={newPass} onChange={setNewPass} />
-        <Input label="Confirm New Password" type="password" value={confirmPass} onChange={setConfirmPass} />
-      </div>
-
-      {error && <ErrorBox text={error} />}
-      {success && <SuccessBox text={success} />}
-
-      <button
-        onClick={updatePassword}
-        className="mt-8 w-full py-3 bg-blue-600 hover:bg-blue-700 rounded-xl shadow-lg"
-      >
-        Update Password
-      </button>
+    <div className="grid gap-8">
+      <ChangePasswordCard />
     </div>
   );
 }
 
-/* -------------------------------
-   THEME & APPEARANCE (UPGRADED)
----------------------------------- */
-function AppearanceSettings() {
+function AppearanceSection() {
   const [theme, setTheme] = useState("system");
 
-  // Load saved theme
   useEffect(() => {
     const saved = localStorage.getItem("theme") || "system";
     setTheme(saved);
-    applyTheme(saved);
   }, []);
 
-  function applyTheme(t: string) {
-    const root = document.documentElement;
-
-    root.classList.remove("light", "dark");
-
-    if (t === "light") root.classList.add("light");
-    if (t === "dark") root.classList.add("dark");
-    if (t === "system") {
-      const sysDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      root.classList.add(sysDark ? "dark" : "light");
-    }
-
-    localStorage.setItem("theme", t);
-  }
-
-  const options = [
-    { id: "light", label: "Light Mode", icon: <Sun size={18} /> },
-    { id: "dark", label: "Dark Mode", icon: <Moon size={18} /> },
-    { id: "system", label: "System Default", icon: <Monitor size={18} /> },
+  const themes = [
+    { id: "light", label: "Light Mode", icon: <Sun size={20} />, desc: "Clean & bright" },
+    { id: "dark", label: "Dark Mode", icon: <Moon size={20} />, desc: "Easy on the eyes" },
+    { id: "system", label: "System Sync", icon: <Monitor size={20} />, desc: "Match OS" },
   ];
 
   return (
-    <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-10 rounded-3xl shadow-xl">
-      <h3 className="text-3xl font-semibold text-blue-300 mb-8">
-        Theme & Appearance
+    <div className="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-3xl p-8 lg:p-10 shadow-2xl shadow-black/20">
+      <h3 className="text-2xl font-bold text-white flex items-center gap-3">
+        <Palette className="text-purple-400" /> Appearance
       </h3>
+      <p className="text-slate-400 mt-2 mb-8">Customize the dashboard look.</p>
 
-      <div className="flex flex-col gap-3 max-w-sm">
-        {options.map((t) => (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {themes.map((t) => (
           <button
             key={t.id}
             onClick={() => {
               setTheme(t.id);
-              applyTheme(t.id);
+              localStorage.setItem("theme", t.id);
             }}
-            className={`flex items-center justify-between px-4 py-3 rounded-xl border transition-all
-              ${
-                theme === t.id
-                  ? "bg-blue-600/30 border-blue-500/50 text-blue-300 shadow-lg shadow-blue-900/40"
-                  : "bg-white/5 border-white/10 text-gray-300 hover:bg-white/10"
-              }
-            `}
-          >
-            <div className="flex items-center gap-3">
-              {t.icon}
-              <span className="text-sm font-medium">{t.label}</span>
-            </div>
-
-            {theme === t.id && (
-              <div className="w-2 h-2 rounded-full bg-blue-400"></div>
+            className={cn(
+              "p-4 rounded-2xl border",
+              theme === t.id
+                ? "bg-blue-600/10 border-blue-500"
+                : "bg-white/5 border-white/10 hover:bg-white/10"
             )}
+          >
+            <div className="mb-3">{t.icon}</div>
+            <div className="font-semibold">{t.label}</div>
+            <div className="text-xs text-slate-500">{t.desc}</div>
           </button>
         ))}
       </div>
+    </div>
+  );
+}
 
-      <p className="mt-6 text-gray-400 text-sm">
-        Your theme is saved automatically.
+/* ------------------------------------------
+   FORM COMPONENTS
+------------------------------------------- */
+
+function ChangePasswordCard() {
+  return (
+    <div className="bg-slate-900/50 border border-white/10 rounded-3xl p-10">
+      <h3 className="text-2xl font-bold">Change Password</h3>
+      <p className="text-slate-400 text-sm mb-6">
+        Update your login password.
       </p>
+
+      <div className="space-y-6 max-w-xl">
+        <InputGroup label="Current Password" type="password" icon={<Key size={18} />} />
+        <InputGroup label="New Password" type="password" icon={<Lock size={18} />} />
+        <InputGroup label="Confirm Password" type="password" icon={<Lock size={18} />} />
+      </div>
+
+      <div className="flex justify-end mt-6">
+        <SaveButton label="Update Password" />
+      </div>
     </div>
   );
 }
 
-/* INPUT */
-function Input({ label, type, value, onChange }: any) {
+function InputGroup({ label, icon, type, value, onChange, placeholder }: any) {
   return (
-    <div>
-      <label className="text-sm text-gray-300">{label}</label>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full p-3 mt-1 bg-white/10 border border-white/20 rounded-xl 
-        focus:ring-2 focus:ring-blue-500 outline-none"
-      />
+    <div className="space-y-2">
+      <label className="text-sm text-slate-300">{label}</label>
+      <div className="relative">
+        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
+          {icon}
+        </span>
+
+        <input
+          type={type}
+          value={value}
+          onChange={(e) => onChange && onChange(e.target.value)}
+          placeholder={placeholder}
+          className="w-full bg-[#0F1623] border border-white/10 rounded-xl py-3 pl-12 pr-4 text-slate-200"
+        />
+      </div>
     </div>
   );
 }
 
-/* ERROR & SUCCESS */
-function ErrorBox({ text }: any) {
+function SaveButton({ onClick, isLoading, label }: any) {
   return (
-    <p className="text-red-400 mt-4 bg-red-900/20 p-3 rounded-xl border border-red-700/30">
-      {text}
-    </p>
-  );
-}
-
-function SuccessBox({ text }: any) {
-  return (
-    <p className="text-green-400 mt-4 bg-green-900/20 p-3 rounded-xl border border-green-700/30">
-      {text}
-    </p>
+    <button
+      onClick={onClick}
+      className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 rounded-xl text-white font-medium shadow-lg"
+    >
+      {label}
+    </button>
   );
 }

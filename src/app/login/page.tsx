@@ -14,7 +14,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // -------- PAGE LOADER --------
+  // PAGE LOADER
   useEffect(() => {
     const timer = setTimeout(() => setPageLoading(false), 2000);
     return () => clearTimeout(timer);
@@ -28,24 +28,28 @@ export default function LoginPage() {
     );
   }
 
-  // -------- LOGIN FUNCTION --------
+  // LOGIN FUNCTION
   const handleLogin = async () => {
     setError("");
     setLoading(true);
 
     try {
-   const res = await fetch("/api/auth/login", {
-  method: "POST",
-  credentials: "include",              // <---- REQUIRED
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ email, password, role }),
-});
-
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, role }),
+      });
 
       const data = await res.json().catch(() => ({}));
 
       if (res.ok) {
-        router.push(role === "admin" ? "/faculty" : "/dashboard");
+        // 👇 CORRECT REDIRECT
+        if (role === "admin") {
+          router.push("/faculty/dashboard");
+        } else {
+          router.push("/dashboard");
+        }
       } else {
         setError(data.error || "Invalid credentials");
       }
@@ -75,7 +79,7 @@ export default function LoginPage() {
           Sign in to access your dashboard.
         </p>
 
-        {/* ROLE TOGGLE */}
+        {/* ROLE SWITCH */}
         <div className="flex mb-5 bg-[#0A1C3A] p-1 rounded-lg border border-[#1C3056]">
           <button
             onClick={() => setRole("student")}
@@ -100,7 +104,7 @@ export default function LoginPage() {
           </button>
         </div>
 
-        {/* EMAIL */}
+        {/* EMAIL INPUT */}
         <label className="text-gray-300 text-sm font-medium">Email Address</label>
         <input
           type="email"
@@ -110,7 +114,7 @@ export default function LoginPage() {
           onChange={(e) => setEmail(e.target.value)}
         />
 
-        {/* PASSWORD */}
+        {/* PASSWORD INPUT */}
         <label className="text-gray-300 text-sm font-medium">Password</label>
         <input
           type="password"
@@ -120,7 +124,7 @@ export default function LoginPage() {
           onChange={(e) => setPassword(e.target.value)}
         />
 
-        {/* ERROR */}
+        {/* ERROR BOX */}
         {error && (
           <p className="text-red-400 text-center bg-red-900/20 border border-red-700 py-2 rounded-lg mb-4">
             {error}

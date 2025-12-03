@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 const JWT_SECRET = process.env.JWT_SECRET as string;
 if (!JWT_SECRET) throw new Error("Missing JWT_SECRET");
 
+// The structure stored inside the JWT token
 export type TokenPayload = {
   userId: string;
   role: "student" | "admin";
@@ -11,23 +12,26 @@ export type TokenPayload = {
   name: string;
 };
 
+// Create JWT
 export function signToken(payload: TokenPayload) {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: "15d" });
 }
 
+// Verify JWT
 export function verifyToken(token: string) {
   return jwt.verify(token, JWT_SECRET) as TokenPayload;
 }
 
-export async function getAuth() {
+// Read token from cookies (server-only)
+export async function getAuth(): Promise<TokenPayload | null> {
   try {
-    const cookieStore = await cookies();  // ← FIX
-    const token = cookieStore.get("token")?.value;
+    const store = await cookies(); // Server-only API
+    const token = store.get("token")?.value;
 
     if (!token) return null;
 
     return verifyToken(token);
-  } catch {
+  } catch (err) {
     return null;
   }
 }

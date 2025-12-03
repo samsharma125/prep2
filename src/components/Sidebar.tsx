@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import clsx from 'clsx'
 import { Menu, X, Bell } from 'lucide-react'
 
+
 const links = [
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/activity', label: 'Activity' },
@@ -16,9 +17,20 @@ const links = [
   { href: '/career-hub', label: 'Career Hub' },
   { href: '/calendar', label: 'Calendar' },
   { href: '/ai-assistant', label: 'AI Assistant' },
-  { href: '/faculty', label: 'Faculty', role: 'admin' as const },
+
+  // 🔥 Admin Dashboard (Faculty is also admin)
+  { href: '/faculty', label: 'Faculty Panel', role: 'admin' },
+
+  // 🔥 Admin-Only Tools (faculty can access because faculty = admin)
+  { href: '/admin', label: 'Admin Dashboard', role: 'admin' },
+  { href: '/students', label: 'Students List', role: 'admin' },
+  { href: '/progress', label: 'Student Progress', role: 'admin' },
+  { href: '/content', label: 'Content Manager', role: 'admin' },
+  { href: '/mock-controls', label: 'Mock Test Controls', role: 'admin' },
+
   { href: '/settings', label: 'Settings' }
-]
+];
+
 
 export default function Sidebar({
   role,
